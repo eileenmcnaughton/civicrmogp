@@ -21,6 +21,57 @@ function civicrmogp_civicrm_buildForm($formName, &$form) {
       ),
     );
     drupal_add_html_head($element, 'ogp_description');
+
+    // Add image.
+    if (($image = _civicrmogp_get_best_image($form->_values['intro_text'])) != FALSE) {
+      $element = array(
+        '#tag' => 'meta',
+        '#attributes' => array(
+          'property' => 'og:image',
+          'content' => $image,
+        ),
+      );
+      drupal_add_html_head($element, 'ogp_image');
+    }
+  }
+}
+
+/**
+ * Get image from the string or return the logo if that is not suitable
+ *
+ * @param string $string
+ *
+ * @return string
+ *   Full path to most suitable image.
+ */
+function _civicrmogp_get_best_image($string) {
+  if (($image = _civicrmogp_parseFirstImageFromString($string)) != FALSE) {
+    return $image;
+  }
+  return theme_get_setting('logo');
+}
+
+/**
+ * Get the first image from the introductory text string.
+ *
+ * @param string $string
+ *
+ * @return string
+ */
+function _civicrmogp_parseFirstImageFromString($string) {
+  $doc = new DOMDocument();
+  // We will suppress errors since this is an end user screen and they may not have control
+  // over the html.
+  @$doc->loadHTML($string);
+  $image = $doc->getElementsByTagName('img')->item(0);
+  if (empty($image)) {
+    return;
+  }
+
+  $image_source = $image->getAttribute('src');
+  if (substr($image_source, 0, 4) == 'http') {
+    // @todo maybe we need to translate to full url here
+    return $image_source;
   }
 }
 
